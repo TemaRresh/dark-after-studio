@@ -1,7 +1,12 @@
 const styles = [
   { id: 'ascii', name: 'ASCII MONO', desc: 'Контрастный портрет из символов' },
   { id: 'colorAscii', name: 'ASCII COLOR', desc: 'Символы сохраняют цвет фотографии' },
+  { id: 'gradientAscii', name: 'GRADIENT ASCII', desc: 'ASCII с цветовым градиентом' },
   { id: 'lyrics', name: 'LYRIC FIELD', desc: 'Изображение из повторяющегося текста' },
+  { id: 'colorLyrics', name: 'COLOR LYRIC', desc: 'Каждая буква берёт цвет фотографии' },
+  { id: 'organicLyrics', name: 'ORGANIC LYRIC', desc: 'Живое поле букв без строгой сетки' },
+  { id: 'echoLyrics', name: 'ECHO LYRICS', desc: 'Призрачные текстовые следы' },
+  { id: 'tinyLyrics', name: 'TINY LYRICS', desc: 'Плотный постер из мелкого текста' },
   { id: 'binary', name: 'BINARY', desc: 'Цифровая структура из нулей и единиц' },
   { id: 'halftone', name: 'HALFTONE', desc: 'Печатные точки переменного размера' },
   { id: 'scanline', name: 'BROKEN SCAN', desc: 'Полосы, разрывы и смещения строк' },
@@ -11,7 +16,6 @@ const styles = [
   { id: 'dataBend', name: 'DATA BEND', desc: 'Цифровое повреждение и цветовые сбои' },
   { id: 'xerox', name: 'XEROX', desc: 'Грубая фотокопия для шелкографии' },
   { id: 'contour', name: 'CONTOUR', desc: 'Светящиеся края и линии формы' },
-  { id: 'barcode', name: 'BARCODE', desc: 'Портрет из вертикальных полос' },
   { id: 'dissolve', name: 'NOISE DISSOLVE', desc: 'Изображение распадается на частицы' }
 ];
 
@@ -30,7 +34,10 @@ const els = {
   videoControls: document.querySelector('#videoControls'), commonControls: document.querySelector('#commonControls'),
   animation: document.querySelector('#animation'), duration: document.querySelector('#duration'), speed: document.querySelector('#speed'),
   format: document.querySelector('#format'), loop: document.querySelector('#loop'), playBtn: document.querySelector('#playBtn'),
-  recordingBadge: document.querySelector('#recordingBadge')
+  recordingBadge: document.querySelector('#recordingBadge'),
+  modGlow: document.querySelector('#modGlow'), modGrain: document.querySelector('#modGrain'),
+  modRgb: document.querySelector('#modRgb'), modOutline: document.querySelector('#modOutline'),
+  modVignette: document.querySelector('#modVignette'), modifierAmount: document.querySelector('#modifierAmount')
 };
 
 const state = { image: null, style: 'ascii', seed: Math.random() * 100000, mode: 'photo', playing: false, raf: 0, animationStart: 0 };
@@ -59,7 +66,10 @@ function settings() {
     structure: Number(els.structure.value) / 100, contrast: Number(els.contrast.value),
     brightness: Number(els.brightness.value), text: els.charset.value.trim() || 'DARK AFTER',
     ink: els.ink.value, bg: els.bg.value, invert: els.invert.checked,
-    transparent: els.transparent.checked, seed: state.seed
+    transparent: els.transparent.checked, seed: state.seed,
+    modifiers: { glow: els.modGlow.checked, grain: els.modGrain.checked, rgb: els.modRgb.checked,
+      outline: els.modOutline.checked, vignette: els.modVignette.checked,
+      amount: Number(els.modifierAmount.value) / 100 }
   };
 }
 
@@ -119,30 +129,53 @@ function renderStyle(canvas, styleId, img, opts, preview = false) {
   const handlers = {
     halftone: drawHalftone, scanline: drawScanline, rgbSplit: drawRgbSplit,
     blockGlitch: drawBlockGlitch, pixelSort: drawPixelSort, dataBend: drawDataBend,
-    xerox: drawXerox, contour: drawContour, barcode: drawBarcode, dissolve: drawDissolve
+    xerox: drawXerox, contour: drawContour, dissolve: drawDissolve
   };
   if (handlers[styleId]) handlers[styleId](ctx, canvas, img, opts, preview);
   else drawTextMode(ctx, canvas, img, opts, styleId, preview);
+  applyModifiers(canvas, opts, preview);
 }
 
 function drawTextMode(ctx, canvas, img, opts, styleId, preview) {
-  const columns = preview ? 38 : opts.columns;
+  let columns = preview ? 38 : opts.columns;
+  if (styleId === 'tinyLyrics') columns = preview ? 62 : Math.min(260, Math.round(opts.columns * 1.65));
   const rows = Math.max(1, Math.round(columns * canvas.height / canvas.width * 0.52));
   const pixels = getPixels(img, columns, rows, opts);
   const cellW = canvas.width / columns, cellH = canvas.height / rows;
-  ctx.font = `700 ${Math.ceil(cellH * 1.15)}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  const fontScale = styleId === 'tinyLyrics' ? 0.72 : 1.15;
+  ctx.font = `700 ${Math.ceil(cellH * fontScale)}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
   ctx.textBaseline = 'top'; ctx.textAlign = 'center';
   const density = '@%#*+=-:. ';
   const phrase = opts.text.replace(/\s+/g, ' ') || 'DARK AFTER';
+  const rand = seededRandom(opts.seed + 73);
   for (let y = 0; y < rows; y++) for (let x = 0; x < columns; x++) {
     const p = pixels[y * columns + x]; let char;
+    const lyricMode = ['lyrics','colorLyrics','organicLyrics','echoLyrics','tinyLyrics'].includes(styleId);
     if (styleId === 'binary') char = p.lum < 128 ? '1' : '0';
-    else if (styleId === 'lyrics') char = phrase[(y * columns + x) % phrase.length];
+    else if (lyricMode) char = phrase[(y * columns + x) % phrase.length];
     else char = density[Math.min(density.length - 1, Math.floor(p.lum / 255 * density.length))];
-    if (styleId === 'colorAscii') ctx.fillStyle = `rgb(${p.r},${p.g},${p.b})`;
-    else if (styleId === 'lyrics') ctx.fillStyle = hexToRgba(opts.ink, 0.1 + (1 - p.lum / 255) * 0.9);
+    let px = x * cellW + cellW / 2, py = y * cellH;
+    if (styleId === 'organicLyrics') {
+      px += (rand() - .5) * cellW * 0.8 * opts.effect;
+      py += (rand() - .5) * cellH * 0.8 * opts.effect;
+      ctx.save(); ctx.translate(px, py); ctx.rotate((rand() - .5) * 0.22 * opts.effect);
+    }
+    const alpha = 0.08 + (1 - p.lum / 255) * 0.92;
+    if (styleId === 'colorAscii' || styleId === 'colorLyrics' || styleId === 'organicLyrics' || styleId === 'tinyLyrics') {
+      ctx.fillStyle = `rgba(${p.r},${p.g},${p.b},${alpha})`;
+    } else if (styleId === 'gradientAscii') {
+      const a = hexToRgb(opts.ink), b = hexToRgb('#ff315f'), mix = y / Math.max(1, rows - 1);
+      ctx.fillStyle = `rgb(${Math.round(a.r*(1-mix)+b.r*mix)},${Math.round(a.g*(1-mix)+b.g*mix)},${Math.round(a.b*(1-mix)+b.b*mix)})`;
+    } else if (lyricMode) ctx.fillStyle = hexToRgba(opts.ink, alpha);
     else ctx.fillStyle = opts.ink;
-    ctx.fillText(char, x * cellW + cellW / 2, y * cellH);
+    if (styleId === 'echoLyrics') {
+      const d = cellW * (0.12 + opts.effect * 0.35);
+      ctx.fillStyle = hexToRgba('#ff315f', alpha * .35); ctx.fillText(char, px - d, py);
+      ctx.fillStyle = hexToRgba('#39d5ff', alpha * .28); ctx.fillText(char, px + d, py);
+      ctx.fillStyle = hexToRgba(opts.ink, alpha); ctx.fillText(char, px, py);
+    } else if (styleId === 'organicLyrics') {
+      ctx.fillText(char, 0, 0); ctx.restore();
+    } else ctx.fillText(char, px, py);
   }
 }
 
@@ -279,21 +312,6 @@ function drawContour(ctx, canvas, img, opts) {
   ctx.imageSmoothingEnabled = opts.structure < 0.5; ctx.drawImage(temp,0,0,canvas.width,canvas.height);
 }
 
-function drawBarcode(ctx, canvas, img, opts, preview) {
-  const columns = preview ? 48 : Math.max(40, Math.round(opts.columns * (0.5 + opts.structure)));
-  const pixels = getPixels(img, columns, 1, opts);
-  const source = preparedSource(img, columns, Math.max(1, Math.round(canvas.height / canvas.width * columns)), opts, true);
-  const data = source.getContext('2d', { willReadFrequently: true }).getImageData(0,0,source.width,source.height).data;
-  const w = canvas.width / columns;
-  ctx.fillStyle = opts.ink;
-  for (let x=0;x<columns;x++) {
-    let sum=0; for(let y=0;y<source.height;y++) sum += data[(y*columns+x)*4];
-    const darkness=1-sum/(source.height*255);
-    const width=w*Math.max(0.08, Math.pow(darkness, 0.5+opts.effect)*0.95);
-    ctx.fillRect(x*w+(w-width)/2,0,width,canvas.height);
-  }
-}
-
 function drawDissolve(ctx, canvas, img, opts, preview) {
   const source = preparedSource(img, canvas.width, canvas.height, opts, false);
   ctx.globalAlpha = 0.3 + (1 - opts.effect) * 0.7; ctx.drawImage(source,0,0); ctx.globalAlpha=1;
@@ -309,6 +327,82 @@ function drawDissolve(ctx, canvas, img, opts, preview) {
       ctx.fillRect(x+drift,y+(rand()-0.5)*drift*0.25,radius,radius);
     }
   }
+}
+
+
+function applyModifiers(canvas, opts, preview) {
+  if (!opts.modifiers) return;
+  const m = opts.modifiers, amount = m.amount || 0;
+  if (!(m.glow || m.grain || m.rgb || m.outline || m.vignette) || amount <= 0) return;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const base = document.createElement('canvas'); base.width = canvas.width; base.height = canvas.height;
+  base.getContext('2d').drawImage(canvas, 0, 0);
+  if (m.rgb) {
+    const shift = Math.max(1, Math.round(canvas.width * 0.012 * amount));
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .32 * amount;
+    ctx.drawImage(tintCanvas(base, '#ff2455'), -shift, 0);
+    ctx.drawImage(tintCanvas(base, '#16d9ff'), shift, 0);
+    ctx.restore();
+  }
+  if (m.glow) {
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .25 + .35 * amount;
+    ctx.filter = `blur(${Math.max(1, canvas.width * .006 * amount)}px)`;
+    ctx.drawImage(base, 0, 0); ctx.restore();
+  }
+  if (m.outline) {
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .38 * amount;
+    const d = Math.max(1, Math.round(1 + 3 * amount));
+    ctx.drawImage(base, -d, 0); ctx.drawImage(base, d, 0); ctx.drawImage(base, 0, -d); ctx.drawImage(base, 0, d);
+    ctx.restore();
+  }
+  if (m.grain) {
+    const image = ctx.getImageData(0,0,canvas.width,canvas.height), data=image.data;
+    const rand = seededRandom(opts.seed + 991);
+    const step = preview ? 12 : 4;
+    for (let y=0;y<canvas.height;y+=step) for(let x=0;x<canvas.width;x+=step){
+      const n=(rand()-.5)*100*amount, i=(y*canvas.width+x)*4;
+      data[i]=Math.max(0,Math.min(255,data[i]+n)); data[i+1]=Math.max(0,Math.min(255,data[i+1]+n)); data[i+2]=Math.max(0,Math.min(255,data[i+2]+n));
+    }
+    ctx.putImageData(image,0,0);
+  }
+  if (m.vignette) {
+    const g=ctx.createRadialGradient(canvas.width/2,canvas.height/2,Math.min(canvas.width,canvas.height)*.18,canvas.width/2,canvas.height/2,Math.max(canvas.width,canvas.height)*.72);
+    g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${.78*amount})`);
+    ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+}
+
+function isLyricStyle(id){ return ['lyrics','colorLyrics','organicLyrics','echoLyrics','tinyLyrics'].includes(id); }
+
+function drawAnimatedLyrics(ctx, canvas, progress, anim, opts) {
+  const cols = Math.min(90, Math.max(34, Math.round(opts.columns * .62)));
+  const rows = Math.max(1, Math.round(cols * canvas.height / canvas.width * .52));
+  const pixels = getPixels(state.image, cols, rows, opts);
+  const cellW = canvas.width / cols, cellH = canvas.height / rows;
+  const phrase = opts.text.replace(/\s+/g,' ') || 'DARK AFTER';
+  const rand = seededRandom(opts.seed + 404);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`700 ${Math.ceil(cellH*.96)}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+  const wave=.5-.5*Math.cos(progress*Math.PI*2);
+  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+    const i=y*cols+x,p=pixels[i],char=phrase[i%phrase.length],alpha=.08+(1-p.lum/255)*.92;
+    let tx=(x+.5)*cellW,ty=(y+.5)*cellH,rot=0,scale=1,visible=1;
+    const r1=rand(),r2=rand(),r3=rand(),phase=r1*Math.PI*2;
+    if(anim==='letterDrift'){tx+=Math.sin(progress*Math.PI*2+phase)*cellW*.28;ty+=Math.cos(progress*Math.PI*2*.8+phase)*cellH*.28;rot=Math.sin(progress*Math.PI*2+phase)*.08;}
+    if(anim==='letterWind'){const gust=Math.sin(progress*Math.PI*2);tx+=gust*canvas.width*(.015+.035*r1)*(1-p.lum/255);ty+=Math.sin(progress*Math.PI*4+phase)*cellH*.18;}
+    if(anim==='letterPulse'){scale=.78+.32*(.5+.5*Math.sin(progress*Math.PI*2+phase));}
+    if(anim==='letterFlicker'){visible=((Math.floor(progress*28+i*13)%17)<2&&r2<.45)?0:1;}
+    if(anim==='letterAssemble'){const delay=(i/(cols*rows))*.58;const q=Math.max(0,Math.min(1,(progress-delay)/.42));tx=(r1*canvas.width)*(1-q)+tx*q;ty=((r2-.5)*canvas.height*2+canvas.height/2)*(1-q)+ty*q;scale=.3+.7*q;visible=q;}
+    if(anim==='letterCollapse'){const q=Math.max(0,Math.min(1,(progress-.12)/.78));tx+=Math.sin(phase)*canvas.width*.32*q;ty+=Math.cos(phase)*canvas.height*.28*q+canvas.height*.22*q*q;rot=q*(r3-.5)*2;visible=1-q*.92;}
+    ctx.save();ctx.translate(tx,ty);ctx.rotate(rot);ctx.scale(scale,scale);ctx.globalAlpha=alpha*visible;
+    const colorMode=['colorLyrics','organicLyrics','tinyLyrics'].includes(state.style);
+    if(colorMode) ctx.fillStyle=`rgb(${p.r},${p.g},${p.b})`; else ctx.fillStyle=opts.ink;
+    if(anim==='letterEcho'||state.style==='echoLyrics'){
+      const d=cellW*(.16+.28*wave);ctx.globalAlpha=alpha*visible*.28;ctx.fillStyle='#ff315f';ctx.fillText(char,-d,0);ctx.fillStyle='#39d5ff';ctx.fillText(char,d,0);ctx.globalAlpha=alpha*visible;ctx.fillStyle=colorMode?`rgb(${p.r},${p.g},${p.b})`:opts.ink;
+    }
+    ctx.fillText(char,0,0);ctx.restore();
+  }
+  ctx.globalAlpha=1;
 }
 
 function tintCanvas(source, color) {
@@ -343,8 +437,8 @@ function loadImage(file) {
 }
 
 els.file.addEventListener('change',e=>loadImage(e.target.files[0]));
-['columns','effect','structure','contrast','brightness','charset','inkColor','bgColor','invert','transparent'].forEach(id=>document.querySelector('#'+id).addEventListener('input',()=>scheduleRender(true)));
-['columns','effect','structure','contrast','brightness'].forEach(id=>{const input=document.querySelector('#'+id),out=document.querySelector('#'+id+'Value'); input.addEventListener('input',()=>out.value=input.value);});
+['columns','effect','structure','contrast','brightness','charset','inkColor','bgColor','invert','transparent','modGlow','modGrain','modRgb','modOutline','modVignette','modifierAmount'].forEach(id=>document.querySelector('#'+id).addEventListener('input',()=>scheduleRender(true)));
+['columns','effect','structure','contrast','brightness','modifierAmount'].forEach(id=>{const input=document.querySelector('#'+id),out=document.querySelector('#'+id+'Value'); input.addEventListener('input',()=>out.value=input.value);});
 els.randomBtn.addEventListener('click',()=>{state.seed=Math.random()*1000000; scheduleRender(true);});
 
 
@@ -358,20 +452,17 @@ function createSvg() {
   const opts=settings(), img=state.image, dims=fitDimensions(img,1800), w=dims.width,h=dims.height;
   const bg=opts.transparent?'':`<rect width="100%" height="100%" fill="${opts.bg}"/>`;
   let body='';
-  if(['ascii','colorAscii','lyrics','binary'].includes(state.style)){
+  if(['ascii','colorAscii','gradientAscii','lyrics','colorLyrics','organicLyrics','echoLyrics','tinyLyrics','binary'].includes(state.style)){
     const cols=Math.min(180,opts.columns), rows=Math.max(1,Math.round(cols*h/w*.52)), px=getPixels(img,cols,rows,opts), cw=w/cols,ch=h/rows;
     const density='@%#*+=-:. ', phrase=opts.text.replace(/\s+/g,' ')||'DARK AFTER';
     for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
-      const p=px[y*cols+x]; let char=state.style==='binary'?(p.lum<128?'1':'0'):state.style==='lyrics'?phrase[(y*cols+x)%phrase.length]:density[Math.min(density.length-1,Math.floor(p.lum/255*density.length))];
-      const fill=state.style==='colorAscii'?`rgb(${p.r},${p.g},${p.b})`:opts.ink; const opacity=state.style==='lyrics'?(0.1+(1-p.lum/255)*.9):1;
+      const p=px[y*cols+x], lyric=['lyrics','colorLyrics','organicLyrics','echoLyrics','tinyLyrics'].includes(state.style); let char=state.style==='binary'?(p.lum<128?'1':'0'):lyric?phrase[(y*cols+x)%phrase.length]:density[Math.min(density.length-1,Math.floor(p.lum/255*density.length))];
+      const colorMode=['colorAscii','colorLyrics','organicLyrics','tinyLyrics'].includes(state.style); const fill=colorMode?`rgb(${p.r},${p.g},${p.b})`:opts.ink; const opacity=lyric?(0.1+(1-p.lum/255)*.9):1;
       body+=`<text x="${(x+.5)*cw}" y="${y*ch}" fill="${fill}" fill-opacity="${opacity}" font-family="monospace" font-weight="700" font-size="${ch*1.15}" text-anchor="middle" dominant-baseline="hanging">${svgEsc(char)}</text>`;
     }
   } else if(state.style==='halftone'){
     const cols=Math.max(18,Math.round(opts.columns*(.35+opts.structure*.45))),rows=Math.max(1,Math.round(cols*h/w)),px=getPixels(img,cols,rows,opts),cw=w/cols,ch=h/rows;
     for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const p=px[y*cols+x],r=Math.min(cw,ch)*.5*Math.pow(1-p.lum/255,.7+opts.effect);body+=`<circle cx="${(x+.5)*cw}" cy="${(y+.5)*ch}" r="${r}" fill="${opts.ink}"/>`;}
-  } else if(state.style==='barcode'){
-    const cols=Math.max(40,Math.round(opts.columns*(.5+opts.structure))),source=preparedSource(img,cols,Math.max(1,Math.round(h/w*cols)),opts,true),d=source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,source.width,source.height).data,cw=w/cols;
-    for(let x=0;x<cols;x++){let sum=0;for(let y=0;y<source.height;y++)sum+=d[(y*cols+x)*4];const dark=1-sum/(source.height*255),bw=cw*Math.max(.08,Math.pow(dark,.5+opts.effect)*.95);body+=`<rect x="${x*cw+(cw-bw)/2}" y="0" width="${bw}" height="${h}" fill="${opts.ink}"/>`;}
   } else {
     const c=document.createElement('canvas'); renderStyle(c,state.style,img,opts,false); const data=c.toDataURL('image/png'); body=`<image href="${data}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none"/>`;
   }
@@ -393,12 +484,16 @@ function drawCover(ctx,source,w,h,scale=1,dx=0,dy=0,alpha=1){const r=Math.max(w/
 function renderVideoFrame(t){
   if(!state.image)return; setVideoSize(); const c=els.videoCanvas,ctx=c.getContext('2d'),opts=settings(),speed=Number(els.speed.value)/100;
   const p=((t*speed)%1+1)%1, wave=.5-.5*Math.cos(p*Math.PI*2); ctx.clearRect(0,0,c.width,c.height); if(!opts.transparent){ctx.fillStyle=opts.bg;ctx.fillRect(0,0,c.width,c.height);}
-  const temp=document.createElement('canvas'), anim=els.animation.value; let local={...opts};
+  const anim=els.animation.value;
+  if(isLyricStyle(state.style) && anim.startsWith('letter')){
+    drawAnimatedLyrics(ctx,c,p,anim,opts); return;
+  }
+  const temp=document.createElement('canvas'); let local={...opts};
   if(anim==='glitchStorm'||anim==='signal'){local.seed=state.seed+Math.floor(p*24);local.effect=Math.min(1,opts.effect*(.45+wave*1.2));}
   if(anim==='rgbPulse') local.effect=Math.min(1,.2+wave*.8);
   renderStyle(temp,state.style,state.image,local,false);
   if(anim==='assemble'){
-    const bands=24,visible=Math.ceil(bands*p);for(let i=0;i<visible;i++){const sy=i*temp.height/bands,sh=temp.height/bands+1,drift=(1-p)*(i%2?1:-1)*c.width*.18;ctx.drawImage(temp,0,sy,temp.width,sh,drift,i*c.height/bands,c.width, c.height/bands+1);}
+    const bands=24,visible=Math.ceil(bands*p);for(let i=0;i<visible;i++){const sy=i*temp.height/bands,sh=temp.height/bands+1,drift=(1-p)*(i%2?1:-1)*c.width*.18;ctx.drawImage(temp,0,sy,temp.width,sh,drift,i*c.height/bands,c.width,c.height/bands+1);}
   } else if(anim==='decay'){
     drawCover(ctx,temp,c.width,c.height,1,0,0,1-p*.75);const rand=seededRandom(state.seed+Math.floor(p*60));ctx.fillStyle=opts.bg;const count=Math.floor(p*900);for(let i=0;i<count;i++){const x=rand()*c.width,y=rand()*c.height,s=2+rand()*18*p;ctx.fillRect(x,y,s,s);}
   } else if(anim==='scanner'){

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#09090b" />
   <title>Dark After Studio</title>
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
   <main class="app-shell">
@@ -41,11 +41,36 @@
           <div class="field split"><label>Цвет<input id="inkColor" type="color" value="#f2f2f2" /></label><label>Фон<input id="bgColor" type="color" value="#09090b" /></label></div>
           <label class="check"><input id="invert" type="checkbox" /> Инвертировать яркость</label>
           <label class="check"><input id="transparent" type="checkbox" /> Прозрачный фон</label>
-          <button id="randomBtn" class="secondary" disabled>Новый вариант глича</button>
+          <button id="randomBtn" class="secondary" disabled>Новый вариант</button>
+          <div class="modifier-panel">
+            <p class="eyebrow modifier-title">MODIFIERS</p>
+            <label class="check"><input id="modGlow" type="checkbox" /> Glow</label>
+            <label class="check"><input id="modGrain" type="checkbox" /> Grain</label>
+            <label class="check"><input id="modRgb" type="checkbox" /> RGB Ghost</label>
+            <label class="check"><input id="modOutline" type="checkbox" /> Outline</label>
+            <label class="check"><input id="modVignette" type="checkbox" /> Vignette</label>
+            <div class="field"><label for="modifierAmount">Сила модификаторов <output id="modifierAmountValue">45</output></label><input id="modifierAmount" type="range" min="0" max="100" value="45" /></div>
+          </div>
         </div>
 
         <div id="videoControls" hidden>
-          <div class="field"><label for="animation">Анимация</label><select id="animation"><option value="signal">SIGNAL</option><option value="assemble">ASSEMBLE</option><option value="decay">DECAY</option><option value="scanner">SCANNER</option><option value="rgbPulse">RGB PULSE</option><option value="glitchStorm">GLITCH STORM</option><option value="breathing">BREATHING TYPE</option></select></div>
+          <div class="field"><label for="animation">Анимация</label><select id="animation">
+            <optgroup label="Анимация букв">
+              <option value="letterDrift">LETTER DRIFT</option>
+              <option value="letterEcho">LETTER ECHO</option>
+              <option value="letterWind">LETTER WIND</option>
+              <option value="letterPulse">LETTER PULSE</option>
+              <option value="letterFlicker">LETTER FLICKER</option>
+              <option value="letterAssemble">LETTER ASSEMBLE</option>
+              <option value="letterCollapse">LETTER COLLAPSE</option>
+            </optgroup>
+            <optgroup label="Общие">
+              <option value="signal">SIGNAL</option><option value="assemble">ASSEMBLE</option>
+              <option value="decay">DECAY</option><option value="scanner">SCANNER</option>
+              <option value="rgbPulse">RGB PULSE</option><option value="glitchStorm">GLITCH STORM</option>
+              <option value="breathing">BREATHING</option>
+            </optgroup>
+          </select></div>
           <div class="field"><label for="duration">Длительность <output id="durationValue">5</output> с</label><input id="duration" type="range" min="2" max="12" value="5" /></div>
           <div class="field"><label for="speed">Скорость <output id="speedValue">100</output>%</label><input id="speed" type="range" min="30" max="220" value="100" /></div>
           <div class="field"><label for="format">Формат</label><select id="format"><option value="vertical">TikTok 9:16</option><option value="square">Квадрат 1:1</option><option value="original">Как фото</option></select></div>
@@ -64,10 +89,10 @@
     </section>
 
     <section class="styles-section">
-      <div class="section-heading"><div><p class="eyebrow">STYLE PREVIEWS</p><h2>Выбери обработку</h2></div><p id="status">Сначала загрузи фотографию</p></div>
+      <div class="section-heading"><div><p class="eyebrow">STYLE PREVIEWS</p><h2>Выбери основу</h2></div><p id="status">Сначала загрузи фотографию</p></div>
       <div id="styleGrid" class="style-grid"></div>
     </section>
   </main>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

@@ -1,11 +1,12 @@
-# Dark After Studio v5
+# Dark After Studio v6
 
-Локальная браузерная студия для генеративной обработки фотографий и коротких анимаций.
+Локальный генератор фото- и видеоарта для Dark After.
 
-## Фото
+## Новое
+- Color Lyric, Organic Lyric, Echo Lyrics, Tiny Lyrics, Gradient ASCII
+- Модификаторы Glow, Grain, RGB Ghost, Outline, Vignette
+- Анимации отдельных букв: Drift, Echo, Wind, Pulse, Flicker, Assemble, Collapse
+- PNG, SVG и видеоэкспорт
+- Barcode удалён
 
-Экспорт PNG и SVG. Текстовые, точечные и штриховые режимы экспортируются настоящими SVG элементами. Сложные растровые эффекты помещаются внутрь SVG как изображение.
-
-## Видео
-
-Живое превью, форматы 9:16, 1:1 и исходный, длительность 2–12 секунд, экспорт MP4 при поддержке браузером, иначе WebM.
+Откройте `index.html` или опубликуйте папку через GitHub Pages.

@@ -77,3 +77,8 @@ button:disabled { opacity: .35; cursor: default; }
 .header-actions{display:flex;gap:10px;align-items:center}.compact{padding:11px 16px}.mode-tabs{display:flex;gap:8px;margin:18px 0}.mode-tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:12px 22px;border-radius:999px;font-weight:800;letter-spacing:.08em}.mode-tab.active{background:var(--text);color:var(--bg)}
 select{width:100%;background:#111116;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit}.control-note{color:var(--muted);font-size:.82rem;line-height:1.45}.recording-badge{position:absolute;top:18px;right:18px;background:#e11d48;color:white;border-radius:999px;padding:7px 12px;font-weight:900;letter-spacing:.15em}.canvas-area{position:relative}#videoCanvas{max-height:78vh;object-fit:contain}.header-actions [hidden]{display:none}
 @media(max-width:700px){.topbar{align-items:flex-start}.header-actions{flex-wrap:wrap;justify-content:flex-end}.mode-tabs{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0}.compact,.primary{padding:10px 13px}}
+
+.modifier-panel{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.modifier-title{margin:0 0 10px}
+.modifier-panel .check{margin:7px 0}
+select optgroup{background:#111;color:#aaa}
