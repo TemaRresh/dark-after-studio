@@ -179,7 +179,7 @@ function hexToRgba(hex, alpha) {
   const n = parseInt(hex.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${alpha})`;
 }
 function renderMain() {
-  els.mainCanvas.hidden = false; els.empty.hidden = true;
+  els.canvas.hidden = false; els.empty.hidden = true;
   els.status.textContent = styles.find(s => s.id === state.style).name;
   renderStyle(els.canvas, state.style, state.image, settings(), false);
 }
