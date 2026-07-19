@@ -5,82 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#09090b" />
   <title>Dark After Studio</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
-      <div>
-        <p class="eyebrow">GENERATIVE IMAGE LAB</p>
-        <h1>DARK AFTER STUDIO</h1>
+      <div><p class="eyebrow">GENERATIVE IMAGE LAB</p><h1>DARK AFTER STUDIO</h1></div>
+      <div class="header-actions">
+        <button id="exportPngBtn" class="primary" disabled>PNG</button>
+        <button id="exportSvgBtn" class="secondary compact" disabled>SVG</button>
+        <button id="exportVideoBtn" class="primary" disabled hidden>Видео</button>
       </div>
-      <button id="exportBtn" class="primary" disabled>Сохранить PNG</button>
     </header>
+
+    <nav class="mode-tabs" aria-label="Режим">
+      <button class="mode-tab active" data-mode="photo">Фото</button>
+      <button class="mode-tab" data-mode="video">Видео</button>
+    </nav>
 
     <section class="workspace">
       <aside class="panel controls">
         <label class="upload" for="fileInput">
-          <input id="fileInput" type="file" accept="image/*" hidden />
+          <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
           <span class="upload-title">Загрузить фотографию</span>
           <span class="upload-subtitle">JPG, PNG, WEBP</span>
         </label>
 
-        <div class="field">
-          <label for="columns">Детализация <output id="columnsValue">100</output></label>
-          <input id="columns" type="range" min="30" max="220" value="100" />
+        <div id="commonControls">
+          <div class="field"><label for="columns">Детализация <output id="columnsValue">100</output></label><input id="columns" type="range" min="30" max="220" value="100" /></div>
+          <div class="field"><label for="effect">Сила эффекта <output id="effectValue">55</output></label><input id="effect" type="range" min="0" max="100" value="55" /></div>
+          <div class="field"><label for="structure">Размер структуры <output id="structureValue">45</output></label><input id="structure" type="range" min="5" max="100" value="45" /></div>
+          <div class="field"><label for="contrast">Контраст <output id="contrastValue">20</output></label><input id="contrast" type="range" min="-50" max="100" value="20" /></div>
+          <div class="field"><label for="brightness">Яркость <output id="brightnessValue">0</output></label><input id="brightness" type="range" min="-80" max="80" value="0" /></div>
+          <div class="field"><label for="charset">Символы или текст</label><textarea id="charset" rows="3">DARK AFTER</textarea></div>
+          <div class="field split"><label>Цвет<input id="inkColor" type="color" value="#f2f2f2" /></label><label>Фон<input id="bgColor" type="color" value="#09090b" /></label></div>
+          <label class="check"><input id="invert" type="checkbox" /> Инвертировать яркость</label>
+          <label class="check"><input id="transparent" type="checkbox" /> Прозрачный фон</label>
+          <button id="randomBtn" class="secondary" disabled>Новый вариант глича</button>
         </div>
 
-        <div class="field">
-          <label for="contrast">Контраст <output id="contrastValue">20</output></label>
-          <input id="contrast" type="range" min="-50" max="100" value="20" />
+        <div id="videoControls" hidden>
+          <div class="field"><label for="animation">Анимация</label><select id="animation"><option value="signal">SIGNAL</option><option value="assemble">ASSEMBLE</option><option value="decay">DECAY</option><option value="scanner">SCANNER</option><option value="rgbPulse">RGB PULSE</option><option value="glitchStorm">GLITCH STORM</option><option value="breathing">BREATHING TYPE</option></select></div>
+          <div class="field"><label for="duration">Длительность <output id="durationValue">5</output> с</label><input id="duration" type="range" min="2" max="12" value="5" /></div>
+          <div class="field"><label for="speed">Скорость <output id="speedValue">100</output>%</label><input id="speed" type="range" min="30" max="220" value="100" /></div>
+          <div class="field"><label for="format">Формат</label><select id="format"><option value="vertical">TikTok 9:16</option><option value="square">Квадрат 1:1</option><option value="original">Как фото</option></select></div>
+          <label class="check"><input id="loop" type="checkbox" checked /> Бесшовный цикл</label>
+          <button id="playBtn" class="secondary" disabled>Запустить превью</button>
+          <p class="control-note">Экспорт идёт в MP4, если браузер умеет. Иначе в WebM.</p>
         </div>
-
-        <div class="field">
-          <label for="brightness">Яркость <output id="brightnessValue">0</output></label>
-          <input id="brightness" type="range" min="-80" max="80" value="0" />
-        </div>
-
-        <div class="field">
-          <label for="charset">Символы или текст</label>
-          <textarea id="charset" rows="3">DARK AFTER</textarea>
-        </div>
-
-        <div class="field split">
-          <label>Цвет
-            <input id="inkColor" type="color" value="#f2f2f2" />
-          </label>
-          <label>Фон
-            <input id="bgColor" type="color" value="#09090b" />
-          </label>
-        </div>
-
-        <label class="check"><input id="invert" type="checkbox" /> Инвертировать яркость</label>
-        <label class="check"><input id="transparent" type="checkbox" /> Прозрачный фон</label>
-        <button id="randomBtn" class="secondary" disabled>Случайный вариант</button>
       </aside>
 
       <section class="canvas-area">
-        <div id="emptyState" class="empty-state">
-          <div class="empty-mark">DA</div>
-          <h2>Загрузи фотографию</h2>
-          <p>Выбранный стиль появится здесь, а миниатюры ниже покажут остальные варианты.</p>
-        </div>
+        <div id="emptyState" class="empty-state"><div class="empty-mark">DA</div><h2>Загрузи фотографию</h2><p>Фото и видео создаются локально в браузере.</p></div>
         <canvas id="mainCanvas" width="1200" height="1200" hidden></canvas>
+        <canvas id="videoCanvas" width="720" height="1280" hidden></canvas>
+        <div id="recordingBadge" class="recording-badge" hidden>REC</div>
       </section>
     </section>
 
     <section class="styles-section">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">STYLE PREVIEWS</p>
-          <h2>Выбери обработку</h2>
-        </div>
-        <p id="status">Сначала загрузи фотографию</p>
-      </div>
+      <div class="section-heading"><div><p class="eyebrow">STYLE PREVIEWS</p><h2>Выбери обработку</h2></div><p id="status">Сначала загрузи фотографию</p></div>
       <div id="styleGrid" class="style-grid"></div>
     </section>
   </main>
-
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
