@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#09090b" />
   <title>Dark After Studio</title>
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
   <main class="app-shell">
@@ -56,6 +56,7 @@
         <div id="videoControls" hidden>
           <div class="field"><label for="animation">Анимация</label><select id="animation">
             <optgroup label="Анимация букв">
+              <option value="recognition">RECOGNITION ENGINE</option>
               <option value="letterDrift">LETTER DRIFT</option>
               <option value="letterEcho">LETTER ECHO</option>
               <option value="letterWind">LETTER WIND</option>
@@ -76,7 +77,28 @@
           <div class="field"><label for="format">Формат</label><select id="format"><option value="vertical">TikTok 9:16</option><option value="square">Квадрат 1:1</option><option value="original">Как фото</option></select></div>
           <label class="check"><input id="loop" type="checkbox" checked /> Бесшовный цикл</label>
           <button id="playBtn" class="secondary" disabled>Запустить превью</button>
-          <p class="control-note">Экспорт идёт в MP4, если браузер умеет. Иначе в WebM.</p>
+
+          <div class="audio-panel">
+            <p class="eyebrow modifier-title">AUDIO REACTIVE</p>
+            <label class="upload audio-upload" for="audioInput">
+              <input id="audioInput" type="file" accept="audio/*" hidden />
+              <span class="upload-title">Загрузить песню</span>
+              <span id="audioFileName" class="upload-subtitle">MP3, M4A, WAV</span>
+            </label>
+            <audio id="audioPlayer" controls preload="metadata"></audio>
+            <label class="check"><input id="audioReactive" type="checkbox" checked /> Реакция на музыку</label>
+            <div class="audio-meters">
+              <div><span>LOW</span><i id="bassMeter"></i></div>
+              <div><span>MID</span><i id="midMeter"></i></div>
+              <div><span>HIGH</span><i id="highMeter"></i></div>
+            </div>
+            <div class="field"><label for="bassSensitivity">Бас → сдвиг строк <output id="bassSensitivityValue">70</output></label><input id="bassSensitivity" type="range" min="0" max="150" value="70" /></div>
+            <div class="field"><label for="midSensitivity">Середина → распознавание <output id="midSensitivityValue">90</output></label><input id="midSensitivity" type="range" min="0" max="150" value="90" /></div>
+            <div class="field"><label for="highSensitivity">Высокие → мерцание <output id="highSensitivityValue">75</output></label><input id="highSensitivity" type="range" min="0" max="150" value="75" /></div>
+            <div class="field"><label for="recognitionBase">Базовое распознавание <output id="recognitionBaseValue">35</output>%</label><input id="recognitionBase" type="range" min="0" max="100" value="35" /></div>
+            <label class="check"><input id="syncAudio" type="checkbox" checked /> Запускать трек вместе с превью</label>
+          </div>
+          <p class="control-note">При экспорте звук добавляется, если браузер поддерживает запись аудиодорожки.</p>
         </div>
       </aside>
 
@@ -93,6 +115,6 @@
       <div id="styleGrid" class="style-grid"></div>
     </section>
   </main>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
