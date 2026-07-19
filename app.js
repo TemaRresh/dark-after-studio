@@ -188,14 +188,44 @@ function renderThumbnails() {
 }
 function loadImage(file) {
   if (!file) return;
-  const url = URL.createObjectURL(file); const img = new Image();
-  img.onload = () => {
-    URL.revokeObjectURL(url); state.image = img;
-    els.exportBtn.disabled = false; els.randomBtn.disabled = false;
-    scheduleRender(true);
+
+  els.status.textContent = `Загрузка: ${file.name}`;
+
+  const supportedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const isHeic = /\.(heic|heif)$/i.test(file.name) || /heic|heif/i.test(file.type);
+
+  if (isHeic) {
+    els.status.textContent = 'HEIC пока не поддерживается';
+    alert('Это HEIC-фотография. Для проверки выбери скриншот PNG или экспортируй фото как JPG.');
+    els.file.value = '';
+    return;
+  }
+
+  if (file.type && !supportedTypes.includes(file.type)) {
+    els.status.textContent = `Неподдерживаемый формат: ${file.type}`;
+  }
+
+  const reader = new FileReader();
+  reader.onerror = () => {
+    els.status.textContent = 'Ошибка чтения файла';
+    alert('Браузер не смог прочитать файл. Попробуй JPG, PNG или WEBP.');
   };
-  img.onerror = () => alert('Не удалось прочитать изображение. Попробуй JPG, PNG или WEBP.');
-  img.src = url;
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      state.image = img;
+      els.exportBtn.disabled = false;
+      els.randomBtn.disabled = false;
+      els.status.textContent = `Загружено: ${file.name}`;
+      scheduleRender(true);
+    };
+    img.onerror = () => {
+      els.status.textContent = 'Формат изображения не декодируется';
+      alert('Файл выбран, но Safari не смог декодировать изображение. Попробуй скриншот PNG или JPG.');
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 els.file.addEventListener('change', e => loadImage(e.target.files[0]));
