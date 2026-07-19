@@ -588,7 +588,7 @@ els.playBtn.addEventListener('click',()=>state.playing?stopPreview():startPrevie
 ['animation','format','loop'].forEach(id=>document.querySelector('#'+id).addEventListener('input',()=>{if(state.mode==='video'&&state.image)startPreview();}));
 ['duration','speed'].forEach(id=>{const input=document.querySelector('#'+id),out=document.querySelector('#'+id+'Value');input.addEventListener('input',()=>{out.value=input.value;if(state.mode==='video'&&state.image)startPreview();});});
 
-els.audioInput.addEventListener('change',e=>{const file=e.target.files&&e.target.files[0];if(!file)return;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=URL.createObjectURL(file);els.audioPlayer.src=state.audioUrl;els.audioFileName.textContent=file.name;els.status.textContent='Песня загружена — выбери Recognition Engine';});
+els.audioInput.addEventListener('change',e=>{const file=e.target.files&&e.target.files[0];if(!file)return;if(state.audioUrl)URL.revokeObjectURL(state.audioUrl);state.audioUrl=URL.createObjectURL(file);els.audioPlayer.src=state.audioUrl;els.audioPlayer.hidden=false;els.audioFileName.textContent=file.name;els.status.textContent='Песня загружена — выбери Recognition Engine';els.audioPlayer.load();});
 els.audioPlayer.addEventListener('play',()=>ensureAudioGraph());
 ['bassSensitivity','midSensitivity','highSensitivity','recognitionBase'].forEach(id=>{const input=document.querySelector('#'+id),out=document.querySelector('#'+id+'Value');input.addEventListener('input',()=>out.value=input.value);});
 

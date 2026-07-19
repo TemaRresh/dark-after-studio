@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#09090b" />
   <title>Dark After Studio</title>
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=7.1" />
 </head>
 <body>
   <main class="app-shell">
@@ -80,12 +80,12 @@
 
           <div class="audio-panel">
             <p class="eyebrow modifier-title">AUDIO REACTIVE</p>
-            <label class="upload audio-upload" for="audioInput">
-              <input id="audioInput" type="file" accept="audio/*" hidden />
-              <span class="upload-title">Загрузить песню</span>
-              <span id="audioFileName" class="upload-subtitle">MP3, M4A, WAV</span>
+            <label class="audio-file-button" for="audioInput">
+              <span class="audio-file-title">Выбрать трек</span>
+              <span id="audioFileName" class="audio-file-name">MP3, M4A, WAV</span>
+              <input id="audioInput" class="audio-file-input" type="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg" />
             </label>
-            <audio id="audioPlayer" controls preload="metadata"></audio>
+            <audio id="audioPlayer" controls preload="metadata" hidden></audio>
             <label class="check"><input id="audioReactive" type="checkbox" checked /> Реакция на музыку</label>
             <div class="audio-meters">
               <div><span>LOW</span><i id="bassMeter"></i></div>
@@ -115,6 +115,6 @@
       <div id="styleGrid" class="style-grid"></div>
     </section>
   </main>
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=7.1"></script>
 </body>
 </html>
